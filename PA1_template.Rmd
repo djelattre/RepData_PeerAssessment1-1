@@ -5,21 +5,64 @@ output:
     keep_md: true
 ---
 
+``` {r}
+library(lattice)
+options(echo = TRUE, scipen = 1, digits = 2)
+```
 
 ## Loading and preprocessing the data
 
+``` {r}
+activityData <- read.csv('activity.csv', colClasses=c("numeric", "character", "numeric"))
+activityData$date <- as.POSIXct(paste(activityData$date, " ", activityData$interval %/% 100, ":", activityData$interval %% 100, sep = ""))
+```
 
 
 ## What is mean total number of steps taken per day?
 
+``` {r}
+totalStepsByDay <- aggregate(activityData$steps, by=list(as.Date(activityData$date)), FUN=sum, drop = TRUE)
 
+hist(totalStepsByDay$x)
+```
+
+Mean steps taken by day is `r mean(totalStepsByDay$x, na.rm = TRUE)`, median is `r median(totalStepsByDay$x, na.rm = TRUE)`.
 
 ## What is the average daily activity pattern?
 
+``` {r}
+dailyActivityPattern <- aggregate(x = activityData$steps, by=list(activityData$interval), mean, na.rm=TRUE)
+rownames(dailyActivityPattern) <- dailyActivityPattern$Group.1
+maxTimeInterval <- dailyActivityPattern[order(-dailyActivityPattern$x)[1], ]
+plot(dailyActivityPattern, type = "l")
+```
 
+Time interval with the most steps is `r maxTimeInterval$Group.1` with `r maxTimeInterval$x` steps.
 
 ## Imputing missing values
 
+``` {r}
+missingValues <- activityData[is.na(activityData$steps), ]
+```
 
+Total number of missing values in dataset is `r nrow(missingValues)` (`r (nrow(missingValues) / nrow(activityData)) * 100` %).
+
+``` {r}
+imputedDataSet <- activityData
+imputedDataSet[is.na(activityData$steps), ]$steps <- unlist(lapply(missingValues$interval, function(x) { dailyActivityPattern[as.character(x), ]$x }))
+
+totalStepsByDayImputed <- aggregate(imputedDataSet$steps, by=list(as.Date(activityData$date)), FUN=sum)
+
+hist(totalStepsByDayImputed$x)
+```
+
+Mean steps taken by day in the imputed dataset is `r mean(totalStepsByDayImputed$x, na.rm = TRUE)`, median is `r median(totalStepsByDayImputed$x, na.rm = TRUE)`.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+``` {r}
+imputedDataSet$weekday <- as.factor(unlist(lapply(weekdays(activityData$date), function(d) { if (d == "Saturday" | d == "Sunday") { "weekend" } else { "weekday" }})))
+dailyActivityPatternPerWeekday <- aggregate(x = activityData$steps, by=list(imputedDataSet$interval, imputedDataSet$weekday), mean, na.rm=TRUE)
+
+xyplot(x ~ Group.1 | Group.2, data=dailyActivityPatternPerWeekday, type="l", layout=c(1,2))
+```
