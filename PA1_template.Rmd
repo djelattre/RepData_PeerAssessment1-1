@@ -5,12 +5,16 @@ output:
     keep_md: true
 ---
 
+This report will visualize data gathered with a personal activity monitoring device. We will first load the _lattice_ library and set global options.
+
 ``` {r}
 library(lattice)
 options(echo = TRUE, scipen = 1, digits = 2)
 ```
 
 ## Loading and preprocessing the data
+
+First step is to load the data from associated _.csv_ file. After reading, we'll augment the `date` column with timestamp data from `interval` column and then convert it to type `POSIXct`.
 
 ``` {r}
 activityData <- read.csv('activity.csv', colClasses=c("numeric", "character", "numeric"))
@@ -27,18 +31,22 @@ activityData$date <- as.POSIXct(
 
 ## What is mean total number of steps taken per day?
 
+After reading and treating the data, we'll group it by day and calculate the sum of steps taken for each day. Then we'll display a histogram showing the distribution of activity. It appears that 10k to 15k steps per day is the most common amount of activity.
+
 ``` {r}
-totalStepsByDay <- aggregate(activityData$steps, 
+totalStepsByDay <- aggregate(list(steps = activityData$steps), 
                              by=list(as.Date(activityData$date)), 
                              FUN=sum, 
                              drop = TRUE)
 
-hist(totalStepsByDay$x)
+hist(main = "Total steps by day frequency", totalStepsByDay$steps, xlab="steps")
 ```
 
-Mean steps taken by day is `r mean(totalStepsByDay$x, na.rm = TRUE)`, median is `r median(totalStepsByDay$x, na.rm = TRUE)`.
+Mean steps taken by day is `r mean(totalStepsByDay$steps, na.rm = TRUE)`, median is `r median(totalStepsByDay$steps, na.rm = TRUE)`.
 
 ## What is the average daily activity pattern?
+
+We will then explore the average daily activity pattern. This pattern is formed by averaging the amount of steps taken per timeframe across all of the days. The pattern shows a clear spike in the morning - possibly a daily commute.
 
 ``` {r}
 dailyActivityPattern <- aggregate(x = list(steps = activityData$steps), 
@@ -50,7 +58,7 @@ maxTimeInterval <- dailyActivityPattern[order(-dailyActivityPattern$steps)[1], ]
 plot(dailyActivityPattern, type = "l")
 ```
 
-Time interval with the most steps is `r maxTimeInterval$Group.1` with `r maxTimeInterval$x` steps.
+Time interval with the most steps is `r maxTimeInterval$interval` with `r maxTimeInterval$steps` steps.
 
 ## Imputing missing values
 
@@ -58,7 +66,7 @@ Time interval with the most steps is `r maxTimeInterval$Group.1` with `r maxTime
 missingValues <- activityData[is.na(activityData$steps), ]
 ```
 
-Total number of missing values in dataset is `r nrow(missingValues)` (`r (nrow(missingValues) / nrow(activityData)) * 100` %).
+The dataset contains a total of `r nrow(missingValues)` missing values (`r (nrow(missingValues) / nrow(activityData)) * 100`% of data missing). These values will be imputed into a separate dataset from the daily activity pattern - i.e. the mean steps for each timestep.
 
 ``` {r}
 imputed <- activityData
@@ -68,12 +76,14 @@ totalStepsByDayImputed <- aggregate(x=list(steps = imputed$steps),
                                     by=list(as.Date(activityData$date)), 
                                     FUN=sum)
 
-hist(main = "Total steps by day frequency", xlab="steps", totalStepsByDayImputed$steps)
+hist(main = "Total steps by day frequency with imputed data", xlab="steps", totalStepsByDayImputed$steps)
 ```
 
-Mean steps taken by day in the imputed dataset is `r mean(totalStepsByDayImputed$x, na.rm = TRUE)`, median is `r median(totalStepsByDayImputed$x, na.rm = TRUE)`.
+Mean steps taken by day in the imputed dataset is `r mean(totalStepsByDayImputed$steps, na.rm = TRUE)`, median is `r median(totalStepsByDayImputed$steps, na.rm = TRUE)`. These values are very close, but slightly lower. Imputing the data this way does not affect the mean and median values significantly.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+Finally, we'll explore the differences in activity between weekdays and weekends. There is a clear pattern of high activity in weekday mornings, whereas activity is much more constant during weekends.
 
 ``` {r}
 dayToWeekDay <- function(d) { 
