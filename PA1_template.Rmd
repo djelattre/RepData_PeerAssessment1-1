@@ -17,7 +17,7 @@ options(echo = TRUE, scipen = 1, digits = 2)
 First step is to load the data from associated _.csv_ file. After reading, we'll augment the `date` column with timestamp data from `interval` column and then convert it to type `POSIXct`.
 
 ``` {r}
-activityData <- read.csv('activity.csv', colClasses=c("numeric", "character", "numeric"))
+activityData <- read.csv(unzip('activity.zip'), colClasses=c("numeric", "character", "numeric"))
 activityData$date <- as.POSIXct(
   paste(
     activityData$date, 

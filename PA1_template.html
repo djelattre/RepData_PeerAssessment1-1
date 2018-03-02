@@ -128,7 +128,7 @@ options(echo = TRUE, scipen = 1, digits = 2)</code></pre>
 <div id="loading-and-preprocessing-the-data" class="section level2">
 <h2>Loading and preprocessing the data</h2>
 <p>First step is to load the data from associated <em>.csv</em> file. After reading, we’ll augment the <code>date</code> column with timestamp data from <code>interval</code> column and then convert it to type <code>POSIXct</code>.</p>
-<pre class="r"><code>activityData &lt;- read.csv('activity.csv', colClasses=c(&quot;numeric&quot;, &quot;character&quot;, &quot;numeric&quot;))
+<pre class="r"><code>activityData &lt;- read.csv(unzip('activity.zip'), colClasses=c(&quot;numeric&quot;, &quot;character&quot;, &quot;numeric&quot;))
 activityData$date &lt;- as.POSIXct(
   paste(
     activityData$date, 

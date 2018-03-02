@@ -19,7 +19,7 @@ First step is to load the data from associated _.csv_ file. After reading, we'll
 
 
 ```r
-activityData <- read.csv('activity.csv', colClasses=c("numeric", "character", "numeric"))
+activityData <- read.csv(unzip('activity.zip'), colClasses=c("numeric", "character", "numeric"))
 activityData$date <- as.POSIXct(
   paste(
     activityData$date, 
